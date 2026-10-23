@@ -1,4 +1,6 @@
-﻿# 🎬 Reel Counter (Android)
+﻿# 🛑 Feedbrake (Android)
+
+> **Put the brakes on your infinite scroll.**
 
 A digital wellbeing app and live counter for short-form video feeds (**Instagram Reels**, **TikTok**, **YouTube Shorts**, and **Facebook Reels**).
 
@@ -24,12 +26,12 @@ Features an interactive **Dynamic Island** overlay anchored to your front camera
   - YouTubeShortsDetector: Tracks YouTube Shorts (com.google.android.youtube)
   - FacebookDetector: Tracks Facebook Reels (com.facebook.katana)
   - GenericDetector: Heuristic fallback for any full-screen vertical snap video feeds.
-- **Smart Debounce Engine**: Minimum viewing threshold (1.4s) to eliminate accidental rapid double-swipes or bouncy scrolling.
+- **Smart Debounce Engine**: Minimum viewing threshold (1.4s) to eliminate accidental rapid double-swipes.
 - **Haptic Feedback**: Subconscious micro-vibration pulse on each reel swipe.
 
 ### 🏠 3. Jetpack Glance Home Screen Widget
 - Modern Material You widget for your Android launcher.
-- Live today's count, status tag (*Mindful*, *Moderate*, *Doomscroll Alert*), and quick glance metrics.
+- Live today''s count, status tag (*Mindful*, *Moderate*, *Doomscroll Alert*), and quick glance metrics.
 
 ### ⚡ 4. Futuristic OLED Dashboard
 - Pure black OLED design with neon cyan/coral accents.
@@ -39,7 +41,7 @@ Features an interactive **Dynamic Island** overlay anchored to your front camera
 
 ---
 
-## 🛠️ Architecture & Tech Stack
+## 🛠️ Tech Stack
 
 - **UI**: Jetpack Compose (BOM 2024.06.00) + Material 3
 - **Widgets**: Jetpack Glance (ndroidx.glance:glance-appwidget)
@@ -47,19 +49,5 @@ Features an interactive **Dynamic Island** overlay anchored to your front camera
 - **Detection**: Android AccessibilityService
 - **Database**: Room Database with Kotlin Coroutines & Flow
 - **Language**: Kotlin 2.0.0
-- **Min SDK**: API 28 (Android 9.0 Pie - required for hardware DisplayCutout APIs)
+- **Min SDK**: API 28 (Android 9.0 Pie)
 - **Target SDK**: API 34 (Android 14)
-
----
-
-## 🚀 How to Run
-
-1. Open **Android Studio**.
-2. Select **Open** and choose D:\Personal projects\ReelCounter.
-3. Let Gradle sync and download dependencies.
-4. Connect an Android phone (or launch an Android emulator with API 28+).
-5. Click **Run** (Shift + F10).
-6. In the app:
-   - Tap **Enable** on *Accessibility Service* and turn on **Reel Counter**.
-   - Tap **Grant** on *Dynamic Island Overlay* and allow **Display over other apps**.
-7. Open Instagram Reels, TikTok, or YouTube Shorts — your Dynamic Island will appear around the camera cutout with live counting!
