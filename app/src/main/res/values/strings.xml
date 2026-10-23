@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Reel Counter</string>
+    <string name="accessibility_service_description">Monitors short-form video scrolls (Instagram Reels, YouTube Shorts, TikTok, Facebook Reels) to track your daily intake and display live counters.</string>
+    <string name="widget_description">Shows today's reels watched, time spent, and focus score.</string>
+</resources>
