@@ -9,11 +9,11 @@ import androidx.glance.*
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.provideContent
+import androidx.glance.color.ColorProvider
 import androidx.glance.layout.*
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.glance.unit.ColorProvider
 import com.reelcounter.app.data.repository.ReelRepository
 import kotlinx.coroutines.flow.first
 
@@ -35,7 +35,7 @@ class ReelGlanceWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(ColorProvider(Color(0xFF10131B)))
+                .background(Color(0xFF10131B))
                 .padding(14.dp),
             verticalAlignment = Alignment.Vertical.CenterVertically,
             horizontalAlignment = Alignment.Horizontal.CenterHorizontally
@@ -73,7 +73,7 @@ class ReelGlanceWidget : GlanceAppWidget() {
                 style = TextStyle(
                     color = ColorProvider(Color.White.copy(alpha = 0.85f)),
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Normal
                 )
             )
         }

@@ -28,7 +28,15 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: |
+          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee gradle-build.log
+
+      - name: Print Build Error Log if Failed
+        if: failure()
+        run: |
+          echo "==================== BUILD ERROR LOG ===================="
+          tail -n 350 gradle-build.log
+          echo "=========================================================="
 
       - name: Rename APK for Release
         run: |

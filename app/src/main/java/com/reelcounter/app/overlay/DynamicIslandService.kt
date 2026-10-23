@@ -13,10 +13,7 @@ import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.ViewTreeLifecycleOwner
+import androidx.lifecycle.*
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
@@ -24,13 +21,15 @@ import androidx.savedstate.ViewTreeSavedStateRegistryOwner
 import com.reelcounter.app.data.model.Platform
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner {
+class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner, ViewModelStoreOwner {
 
     private val lifecycleRegistry = LifecycleRegistry(this)
     private val savedStateRegistryController = SavedStateRegistryController.create(this)
+    private val store = ViewModelStore()
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
     override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
+    override val viewModelStore: ViewModelStore get() = store
 
     private var windowManager: WindowManager? = null
     private var composeView: ComposeView? = null
@@ -115,6 +114,7 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner 
         composeView = ComposeView(this).apply {
             ViewTreeLifecycleOwner.set(this, this@DynamicIslandService)
             ViewTreeSavedStateRegistryOwner.set(this, this@DynamicIslandService)
+            ViewTreeViewModelStoreOwner.set(this, this@DynamicIslandService)
             setContent {
                 DynamicIslandOverlay(
                     platformState = currentPlatformState,
@@ -142,6 +142,7 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner 
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        store.clear()
         super.onDestroy()
     }
 
