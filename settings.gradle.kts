@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ReelCounter"
+rootProject.name = "Feedbrake"
 include(":app")

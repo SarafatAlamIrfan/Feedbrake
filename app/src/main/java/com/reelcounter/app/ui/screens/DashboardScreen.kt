@@ -62,7 +62,7 @@ fun DashboardScreen(
             ) {
                 Column {
                     Text(
-                        text = "REEL COUNTER",
+                        text = "FEEDBRAKE",
                         color = NeonCyan,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.ExtraBold,

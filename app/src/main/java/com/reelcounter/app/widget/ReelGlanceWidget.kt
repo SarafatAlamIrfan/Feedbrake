@@ -41,7 +41,7 @@ class ReelGlanceWidget : GlanceAppWidget() {
             horizontalAlignment = Alignment.Horizontal.CenterHorizontally
         ) {
             Text(
-                text = "REELS TODAY",
+                text = "FEEDBRAKE • REELS",
                 style = TextStyle(
                     color = ColorProvider(Color.White.copy(alpha = 0.5f)),
                     fontSize = 11.sp,

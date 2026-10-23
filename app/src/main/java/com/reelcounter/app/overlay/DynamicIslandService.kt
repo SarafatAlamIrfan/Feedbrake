@@ -61,7 +61,7 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner 
         }
 
         val notification: Notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Reel Counter Live")
+            .setContentTitle("Feedbrake Live")
             .setContentText("Dynamic Island tracking active reels")
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setOngoing(true)
