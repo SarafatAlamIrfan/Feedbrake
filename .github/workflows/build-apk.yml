@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -28,7 +30,19 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: |
+          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee gradle-build.log
+
+      - name: Capture Failure Log if Failed
+        if: failure()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B build-error-log
+          tail -n 300 gradle-build.log > ERROR.txt
+          git add ERROR.txt
+          git commit -m "Capture build failure error"
+          git push -f origin build-error-log
 
       - name: Rename APK for Release
         run: |
