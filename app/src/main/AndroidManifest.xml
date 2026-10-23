@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Permissions for Floating Dynamic Island and Foreground Service -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -29,7 +26,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Accessibility Service for Automatic Reel & Short-Form Video Detection -->
         <service
             android:name=".service.ReelAccessibilityService"
             android:exported="false"
@@ -42,17 +38,10 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
-        <!-- Dynamic Island Overlay Foreground Service -->
         <service
             android:name=".overlay.DynamicIslandService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Live reel counter dynamic island overlay" />
-        </service>
+            android:exported="false" />
 
-        <!-- Glance Home Screen Widget Receiver -->
         <receiver
             android:name=".widget.ReelWidgetReceiver"
             android:exported="true">
