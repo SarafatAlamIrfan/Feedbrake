@@ -8,43 +8,43 @@ enum class Platform(
 ) {
     INSTAGRAM(
         displayName = "Instagram",
-        iconEmoji = "📸",
+        iconEmoji = "\U0001F4F8", // 📸
         brandHexColor = 0xFFE1306C,
         packageNames = listOf("com.instagram.android")
     ),
     TIKTOK(
         displayName = "TikTok",
-        iconEmoji = "🎵",
+        iconEmoji = "\U0001F3B5", // 🎵
         brandHexColor = 0xFF00F2FE,
         packageNames = listOf("com.zhiliaoapp.musically", "com.ss.android.ugc.trill")
     ),
     YOUTUBE_SHORTS(
         displayName = "YouTube Shorts",
-        iconEmoji = "▶️",
+        iconEmoji = "\u25B6\uFE0F", // ▶️
         brandHexColor = 0xFFFF0000,
         packageNames = listOf("com.google.android.youtube")
     ),
     FACEBOOK(
         displayName = "Facebook",
-        iconEmoji = "📘",
+        iconEmoji = "\U0001F4D8", // 📘
         brandHexColor = 0xFF1877F2,
         packageNames = listOf("com.facebook.katana", "com.facebook.lite")
     ),
     SNAPCHAT(
         displayName = "Snapchat Spotlight",
-        iconEmoji = "👻",
+        iconEmoji = "\U0001F47B", // 👻
         brandHexColor = 0xFFFFFC00,
         packageNames = listOf("com.snapchat.android")
     ),
     REDDIT(
         displayName = "Reddit",
-        iconEmoji = "🤖",
+        iconEmoji = "\U0001F916", // 🤖
         brandHexColor = 0xFFFF4500,
         packageNames = listOf("com.reddit.frontpage")
     ),
     OTHER(
         displayName = "Shorts",
-        iconEmoji = "🎬",
+        iconEmoji = "\U0001F3AC", // 🎬
         brandHexColor = 0xFF9C27B0,
         packageNames = emptyList()
     );

@@ -19,8 +19,6 @@ object CutoutDetector {
 
     fun detectCutout(context: Context): IslandAnchor {
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val display = windowManager.defaultDisplay
-
         val displayMetrics = context.resources.displayMetrics
         val screenWidth = displayMetrics.widthPixels
 
@@ -35,19 +33,16 @@ object CutoutDetector {
 
             if (cutout != null && cutout.boundingRects.isNotEmpty()) {
                 val rect: Rect = cutout.boundingRects.first()
-                val centerX = rect.centerX()
-                val topY = rect.top
                 return IslandAnchor(
                     hasCutout = true,
-                    centerX = centerX,
-                    topY = topY,
+                    centerX = rect.centerX(),
+                    topY = rect.top,
                     cutoutWidth = rect.width(),
                     cutoutHeight = rect.height()
                 )
             }
         }
 
-        // Fallback for devices without standard cutout detection: Center top
         return IslandAnchor(
             hasCutout = false,
             centerX = screenWidth / 2,

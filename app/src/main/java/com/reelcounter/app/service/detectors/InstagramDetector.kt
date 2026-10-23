@@ -27,7 +27,6 @@ class InstagramDetector : PlatformDetector {
 
     override fun isScrollGesture(event: AccessibilityEvent): Boolean {
         if (event.eventType != AccessibilityEvent.TYPE_VIEW_SCROLLED) return false
-        val deltaY = event.scrollY - (event.scrollDeltaY)
         return event.scrollDeltaY > 15 || event.scrollDeltaY < -15 || event.itemCount > 0
     }
 }

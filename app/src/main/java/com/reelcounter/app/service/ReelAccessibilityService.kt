@@ -1,9 +1,7 @@
 package com.reelcounter.app.service
 
 import android.accessibilityservice.AccessibilityService
-import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
-import com.reelcounter.app.data.model.Platform
 import com.reelcounter.app.data.repository.ReelRepository
 import com.reelcounter.app.overlay.DynamicIslandService
 import com.reelcounter.app.service.detectors.*
@@ -31,7 +29,6 @@ class ReelAccessibilityService : AccessibilityService() {
             serviceScope.launch {
                 repository.recordReel(platform)
             }
-            // Send live update to Dynamic Island Overlay
             DynamicIslandService.updateLiveCount(this, platform, sessionCount)
         }
     }

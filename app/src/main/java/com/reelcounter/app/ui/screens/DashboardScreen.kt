@@ -8,9 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,7 +50,6 @@ fun DashboardScreen(
         contentPadding = PaddingValues(top = 40.dp, bottom = 48.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // === HEADER ===
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -76,7 +72,6 @@ fun DashboardScreen(
                     )
                 }
 
-                // Zen score pill
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
@@ -94,7 +89,6 @@ fun DashboardScreen(
             }
         }
 
-        // === HERO DIAL CARD ===
         item {
             Box(
                 modifier = Modifier
@@ -110,7 +104,6 @@ fun DashboardScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Circular Progress Dial
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(190.dp)
@@ -131,13 +124,13 @@ fun DashboardScreen(
                         )
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "\$totalCount",
+                                text = totalCount.toString(),
                                 color = TextPrimary,
                                 fontSize = 52.sp,
                                 fontWeight = FontWeight.Black
                             )
                             Text(
-                                text = "/ \$targetLimit reels goal",
+                                text = "/ " + targetLimit.toString() + " reels goal",
                                 color = TextSecondary,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
@@ -147,14 +140,15 @@ fun DashboardScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Quick Stats Row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
+                        val minutesStr = (stats?.totalWatchTimeMinutes ?: 0).toString() + " min"
+                        val zenStr = (stats?.zenScore ?: 100).toString() + "%"
                         QuickStatItem(
                             label = "Estimated Time",
-                            value = "\${stats?.totalWatchTimeMinutes ?: 0} min"
+                            value = minutesStr
                         )
                         Box(
                             modifier = Modifier
@@ -164,14 +158,13 @@ fun DashboardScreen(
                         )
                         QuickStatItem(
                             label = "Mindful Score",
-                            value = "\${stats?.zenScore ?: 100}%"
+                            value = zenStr
                         )
                     }
                 }
             }
         }
 
-        // === PLATFORM BREAKDOWN SECTION ===
         item {
             Text(
                 text = "PLATFORM BREAKDOWN",
@@ -197,7 +190,6 @@ fun DashboardScreen(
             }
         }
 
-        // === PERMISSIONS / SETUP CARD ===
         item {
             Text(
                 text = "DYNAMIC ISLAND SETUP",
@@ -224,7 +216,7 @@ fun DashboardScreen(
                     buttonText = "Enable",
                     onClick = onOpenAccessibilitySettings
                 )
-                Divider(color = Color.White.copy(alpha = 0.08f))
+                HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
                 PermissionActionRow(
                     title = "2. Dynamic Island Overlay",
                     subtitle = "Draws the pill around your camera punch-hole",
@@ -271,12 +263,12 @@ fun PlatformRowCard(platform: Platform, count: Int, total: Int) {
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(text = platform.displayName, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(text = "\$percentage% of total", color = TextSecondary, fontSize = 11.sp)
+                Text(text = percentage.toString() + "% of total", color = TextSecondary, fontSize = 11.sp)
             }
         }
 
         Text(
-            text = "\$count",
+            text = count.toString(),
             color = TextPrimary,
             fontWeight = FontWeight.Black,
             fontSize = 18.sp

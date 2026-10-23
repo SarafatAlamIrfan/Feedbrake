@@ -5,7 +5,7 @@ data class DailyStats(
     val totalCount: Int,
     val totalWatchTimeSeconds: Long,
     val platformCounts: Map<Platform, Int>,
-    val zenScore: Int // 0 to 100 percentage
+    val zenScore: Int
 ) {
     val totalWatchTimeMinutes: Int get() = (totalWatchTimeSeconds / 60).toInt()
 

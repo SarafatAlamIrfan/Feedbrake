@@ -8,12 +8,11 @@ import com.reelcounter.app.data.model.Platform
 
 class ReelDebounceEngine(
     private val context: Context,
-    private val minViewDurationMillis: Long = 1400L, // Minimum time spent before count increments
+    private val minViewDurationMillis: Long = 1400L,
     private val onReelCounted: (platform: Platform, count: Int) -> Unit
 ) {
     private var lastScrollTime = 0L
     private var currentSessionCount = 0
-    private var activePlatform: Platform = Platform.OTHER
 
     private val vibrator: Vibrator? by lazy {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
@@ -29,12 +28,8 @@ class ReelDebounceEngine(
         val now = System.currentTimeMillis()
         if (now - lastScrollTime >= minViewDurationMillis) {
             lastScrollTime = now
-            activePlatform = platform
             currentSessionCount++
-
-            // Haptic feedback pulse on every reel
             triggerMicroHaptic()
-
             onReelCounted(platform, currentSessionCount)
         }
     }

@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,19 +34,17 @@ fun DynamicIslandOverlay(
     val count by countState.collectAsState()
     var isExpanded by remember { mutableStateOf(false) }
 
-    // Dopamine Meter Color shift based on count
     val meterColor by animateColorAsState(
         targetValue = when {
-            count < 15 -> Color(0xFF00F2FE) // Cool Cyan
-            count < 30 -> Color(0xFF00E676) // Healthy Green
-            count < 50 -> Color(0xFFFFB300) // Caution Amber
-            else -> Color(0xFFFF3366)       // Danger Doomscroll Red
+            count < 15 -> Color(0xFF00F2FE)
+            count < 30 -> Color(0xFF00E676)
+            count < 50 -> Color(0xFFFFB300)
+            else -> Color(0xFFFF3366)
         },
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label = "meter_color"
     )
 
-    // Spring animation for expanding / collapsing the Dynamic Island
     val islandWidth by animateDpAsState(
         targetValue = if (isExpanded) 340.dp else 190.dp,
         animationSpec = spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow),
@@ -65,7 +62,7 @@ fun DynamicIslandOverlay(
             .padding(top = 8.dp)
             .shadow(elevation = 18.dp, shape = RoundedCornerShape(26.dp), spotColor = meterColor)
             .clip(RoundedCornerShape(26.dp))
-            .background(Color(0xFF000000)) // True Pitch Black matching cutout
+            .background(Color(0xFF000000))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -76,13 +73,11 @@ fun DynamicIslandOverlay(
         contentAlignment = Alignment.Center
     ) {
         if (!isExpanded) {
-            // === COMPACT DYNAMIC ISLAND (Wrapped around camera cutout) ===
             Row(
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Left Wing: Platform Emoji & Glowing Status
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = platform.iconEmoji,
@@ -97,10 +92,8 @@ fun DynamicIslandOverlay(
                     )
                 }
 
-                // Center Gap: Accommodates Camera Punch-Hole
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Right Wing: Live Count Pill
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AnimatedContent(
                         targetState = count,
@@ -111,7 +104,7 @@ fun DynamicIslandOverlay(
                         label = "count_anim"
                     ) { targetCount ->
                         Text(
-                            text = "\$targetCount",
+                            text = targetCount.toString(),
                             color = Color.White,
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 15.sp
@@ -126,7 +119,6 @@ fun DynamicIslandOverlay(
                 }
             }
         } else {
-            // === EXPANDED DYNAMIC ISLAND CARD ===
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.SpaceBetween
@@ -168,7 +160,6 @@ fun DynamicIslandOverlay(
                     }
                 }
 
-                // Hero Counter in Expanded View
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -176,20 +167,19 @@ fun DynamicIslandOverlay(
                 ) {
                     Column {
                         Text(
-                            text = "\$count Reels Today",
+                            text = count.toString() + " Reels Today",
                             color = Color.White,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Black
                         )
                         val estimatedMinutes = (count * 25) / 60
                         Text(
-                            text = "≈ \$estimatedMinutes mins elapsed",
+                            text = "≈ " + estimatedMinutes.toString() + " mins elapsed",
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 12.sp
                         )
                     }
 
-                    // Dopamine Status Tag
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
@@ -197,7 +187,7 @@ fun DynamicIslandOverlay(
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = if (count > 50) "🔥 High Dopamine" else "✨ Mindful",
+                            text = if (count > 50) "High Dopamine" else "Mindful",
                             color = meterColor,
                             fontWeight = FontWeight.Bold,
                             fontSize = 11.sp
@@ -205,7 +195,6 @@ fun DynamicIslandOverlay(
                     }
                 }
 
-                // Dopamine Progress Bar
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

@@ -43,7 +43,6 @@ class ReelRepository(private val dao: ReelDao) {
         todayCount,
         todayPlatformBreakdown
     ) { count, breakdown ->
-        // Assume avg 25 seconds per reel if individual duration wasn't tracked
         val estimatedSeconds = count * 25L
         val maxTarget = 50
         val zenScore = ((1f - (count.toFloat() / (maxTarget * 1.5f))).coerceIn(0f, 1f) * 100).toInt()

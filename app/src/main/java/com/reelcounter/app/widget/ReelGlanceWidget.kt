@@ -41,7 +41,7 @@ class ReelGlanceWidget : GlanceAppWidget() {
             horizontalAlignment = Alignment.Horizontal.CenterHorizontally
         ) {
             Text(
-                text = "FEEDBRAKE • REELS",
+                text = "FEEDBRAKE - REELS",
                 style = TextStyle(
                     color = ColorProvider(Color.White.copy(alpha = 0.5f)),
                     fontSize = 11.sp,
@@ -52,7 +52,7 @@ class ReelGlanceWidget : GlanceAppWidget() {
             Spacer(modifier = GlanceModifier.height(4.dp))
 
             Text(
-                text = "\$count",
+                text = count.toString(),
                 style = TextStyle(
                     color = ColorProvider(accentColor),
                     fontSize = 44.sp,
@@ -63,9 +63,9 @@ class ReelGlanceWidget : GlanceAppWidget() {
             Spacer(modifier = GlanceModifier.height(4.dp))
 
             val statusText = when {
-                count < 20 -> "🌿 Mindful Focus"
-                count < 50 -> "⚡ Moderate"
-                else -> "🚨 Doomscroll Alert"
+                count < 20 -> "Mindful Focus"
+                count < 50 -> "Moderate"
+                else -> "Doomscroll Alert"
             }
 
             Text(

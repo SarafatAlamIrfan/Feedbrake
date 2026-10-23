@@ -22,7 +22,6 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.reelcounter.app.data.model.Platform
-import com.reelcounter.app.data.repository.ReelRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner {
@@ -49,7 +48,7 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner 
     }
 
     private fun startForegroundNotification() {
-        val channelId = "reel_counter_island_channel"
+        val channelId = "feedbrake_island_channel"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,

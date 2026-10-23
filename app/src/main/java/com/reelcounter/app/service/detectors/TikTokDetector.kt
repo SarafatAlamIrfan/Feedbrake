@@ -12,7 +12,6 @@ class TikTokDetector : PlatformDetector {
     }
 
     override fun isReelViewerActive(event: AccessibilityEvent, rootNode: AccessibilityNodeInfo?): Boolean {
-        // TikTok is exclusively full screen vertical video feed by nature
         return true
     }
 
