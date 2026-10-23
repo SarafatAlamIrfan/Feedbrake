@@ -1,5 +1,6 @@
 package com.reelcounter.app.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
@@ -26,6 +27,6 @@ interface ReelDao {
 }
 
 data class PlatformCountResult(
-    val platform: Platform,
-    val count: Int
+    @ColumnInfo(name = "platform") val platform: Platform,
+    @ColumnInfo(name = "count") val count: Int
 )

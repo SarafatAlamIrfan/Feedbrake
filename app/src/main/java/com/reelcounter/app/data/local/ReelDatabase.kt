@@ -9,7 +9,7 @@ import androidx.room.TypeConverters
 import com.reelcounter.app.data.model.Platform
 import com.reelcounter.app.data.model.ReelEvent
 
-class PlatformTypeConverters {
+object PlatformTypeConverters {
     @TypeConverter
     fun fromPlatform(platform: Platform): String = platform.name
 

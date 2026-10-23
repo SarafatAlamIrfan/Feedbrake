@@ -16,11 +16,11 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.ViewTreeLifecycleOwner
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
-import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import androidx.savedstate.ViewTreeSavedStateRegistryOwner
 import com.reelcounter.app.data.model.Platform
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -113,8 +113,8 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner 
         }
 
         composeView = ComposeView(this).apply {
-            setViewTreeLifecycleOwner(this@DynamicIslandService)
-            setViewTreeSavedStateRegistryOwner(this@DynamicIslandService)
+            ViewTreeLifecycleOwner.set(this, this@DynamicIslandService)
+            ViewTreeSavedStateRegistryOwner.set(this, this@DynamicIslandService)
             setContent {
                 DynamicIslandOverlay(
                     platformState = currentPlatformState,
