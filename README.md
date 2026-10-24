@@ -5,8 +5,8 @@
 ---
 
 ### 📲 Download APK
-👉 **[Download Feedbrake v1.0.0 APK](https://github.com/SarafatAlamIrfan/Feedbrake/releases/download/v1.0.0/Feedbrake-v1.0.0-debug.apk)** (Direct APK Download)  
-📦 **[View GitHub Releases](https://github.com/SarafatAlamIrfan/Feedbrake/releases)** | 🚀 **[Alternative Raw APK Link](https://github.com/SarafatAlamIrfan/Feedbrake/raw/apk-download/Feedbrake-v1.0.0-debug.apk)**
+👉 **[Download Feedbrake v1.0.1 APK](https://github.com/SarafatAlamIrfan/Feedbrake/releases/download/v1.0.1/Feedbrake-v1.0.1-debug.apk)** (Direct APK Download)  
+📦 **[View GitHub Releases](https://github.com/SarafatAlamIrfan/Feedbrake/releases)** | 🚀 **[Alternative Raw APK Link](https://github.com/SarafatAlamIrfan/Feedbrake/raw/apk-download/Feedbrake-v1.0.1-debug.apk)**
 
 ---
 
