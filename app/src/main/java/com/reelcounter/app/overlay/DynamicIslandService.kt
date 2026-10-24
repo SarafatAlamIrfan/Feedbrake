@@ -6,9 +6,12 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
+import android.provider.Settings
+import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
@@ -42,6 +45,7 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
     private var isIslandVisible = false
 
     companion object {
+        private const val TAG = "DynamicIslandService"
         private const val ACTION_SHOW = "com.reelcounter.app.SHOW_ISLAND"
         private const val ACTION_HIDE = "com.reelcounter.app.HIDE_ISLAND"
         private const val ACTION_UPDATE_COUNT = "com.reelcounter.app.UPDATE_COUNT"
@@ -59,10 +63,14 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
                 action = ACTION_SHOW
                 putExtra(EXTRA_PLATFORM, platform.name)
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
-            } else {
-                context.startService(intent)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start DynamicIslandService: ${e.message}")
             }
         }
 
@@ -70,7 +78,11 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
             val intent = Intent(context, DynamicIslandService::class.java).apply {
                 action = ACTION_HIDE
             }
-            context.startService(intent)
+            try {
+                context.startService(intent)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to stop DynamicIslandService: ${e.message}")
+            }
         }
 
         fun updateLiveCount(context: Context, platform: Platform, count: Int) {
@@ -79,7 +91,11 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
                 putExtra(EXTRA_PLATFORM, platform.name)
                 putExtra(EXTRA_COUNT, count)
             }
-            context.startService(intent)
+            try {
+                context.startService(intent)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to update live count: ${e.message}")
+            }
         }
     }
 
@@ -91,7 +107,17 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
 
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        startForeground(NOTIFICATION_ID, createNotification())
+
+        try {
+            val notification = createNotification()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "startForeground non-fatal error: ${e.message}")
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -104,6 +130,9 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
             ACTION_UPDATE_COUNT -> {
                 val count = intent.getIntExtra(EXTRA_COUNT, liveCountState.value + 1)
                 liveCountState.value = count
+                if (!isIslandVisible) {
+                    showIslandOverlay()
+                }
             }
             ACTION_HIDE -> {
                 hideIslandOverlay()
@@ -115,7 +144,14 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
 
     private fun showIslandOverlay() {
         if (isIslandVisible) return
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            Log.w(TAG, "Cannot show overlay: SYSTEM_ALERT_WINDOW permission not granted")
+            return
+        }
+
         val anchor = CutoutDetector.detectCutout(this)
+        val density = resources.displayMetrics.density
 
         val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -135,7 +171,11 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = if (anchor.hasCutout) anchor.topY else 24
+            y = if (anchor.hasCutout && anchor.topY > 0) {
+                anchor.topY
+            } else {
+                (8 * density).toInt().coerceAtLeast(16)
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
             }
@@ -157,8 +197,9 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
         try {
             windowManager?.addView(composeView, params)
             isIslandVisible = true
+            Log.i(TAG, "Dynamic Island overlay added successfully at y=${params.y}")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to add overlay view: ${e.message}")
         }
     }
 
@@ -168,8 +209,9 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
             composeView?.let { windowManager?.removeView(it) }
             composeView = null
             isIslandVisible = false
+            Log.i(TAG, "Dynamic Island overlay removed successfully")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to remove overlay view: ${e.message}")
         }
     }
 

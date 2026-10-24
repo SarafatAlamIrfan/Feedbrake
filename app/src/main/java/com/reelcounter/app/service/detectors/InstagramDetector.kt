@@ -13,7 +13,7 @@ class InstagramDetector : PlatformDetector {
 
     override fun isReelViewerActive(event: AccessibilityEvent, rootNode: AccessibilityNodeInfo?): Boolean {
         val className = event.className?.toString() ?: ""
-        if (className.contains("ClipsViewer") || className.contains("ReelViewer") || className.contains("ModalActivity")) {
+        if (className.contains("Clips") || className.contains("Reel") || className.contains("ModalActivity")) {
             return true
         }
         if (rootNode == null) return false
@@ -26,7 +26,6 @@ class InstagramDetector : PlatformDetector {
     }
 
     override fun isScrollGesture(event: AccessibilityEvent): Boolean {
-        if (event.eventType != AccessibilityEvent.TYPE_VIEW_SCROLLED) return false
-        return event.scrollDeltaY > 15 || event.scrollDeltaY < -15 || event.itemCount > 0
+        return event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED
     }
 }

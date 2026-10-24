@@ -27,28 +27,33 @@ import com.reelcounter.app.ui.theme.*
 @Composable
 fun DashboardScreen(
     stats: DailyStats?,
+    isAccessibilityEnabled: Boolean,
+    isOverlayGranted: Boolean,
     onOpenAccessibilitySettings: () -> Unit,
-    onOpenOverlaySettings: () -> Unit
+    onOpenOverlaySettings: () -> Unit,
+    onTestDynamicIsland: () -> Unit,
+    onDismissDynamicIsland: () -> Unit,
+    onSimulateReelSwipe: () -> Unit
 ) {
     val totalCount = stats?.totalCount ?: 0
     val targetLimit = 50
-    val progress = (totalCount.toFloat() / targetLimit).coerceIn(0f, 1f)
+    val currentDangerLevel = DangerLevel.fromCount(totalCount)
 
+    val progressFraction = (totalCount.toFloat() / targetLimit.toFloat()).coerceIn(0f, 1f)
     val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(durationMillis = 1000),
-        label = "progress_dial"
+        targetValue = progressFraction,
+        animationSpec = tween(durationMillis = 900),
+        label = "progress"
     )
-
-    val currentDangerLevel = stats?.dangerLevel ?: DangerLevel.MINDFUL
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(DarkBackground)
+            .statusBarsPadding()
             .padding(horizontal = 20.dp),
-        contentPadding = PaddingValues(top = 40.dp, bottom = 48.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 40.dp)
     ) {
         item {
             Row(
@@ -60,30 +65,30 @@ fun DashboardScreen(
                     Text(
                         text = "FEEDBRAKE",
                         color = NeonCyan,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Black,
                         letterSpacing = 2.sp
                     )
                     Text(
-                        text = "Today's Intake",
+                        text = "Reel Intake Monitor",
                         color = TextPrimary,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Black
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.ExtraBold
                     )
                 }
 
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(Color(currentDangerLevel.hexColor).copy(alpha = 0.15f))
-                        .border(1.dp, Color(currentDangerLevel.hexColor).copy(alpha = 0.4f), RoundedCornerShape(16.dp))
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .border(1.dp, Color(currentDangerLevel.hexColor).copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = currentDangerLevel.label,
+                        text = currentDangerLevel.displayName,
                         color = Color(currentDangerLevel.hexColor),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
+                        fontSize = 11.sp
                     )
                 }
             }
@@ -96,7 +101,7 @@ fun DashboardScreen(
                     .clip(RoundedCornerShape(28.dp))
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(DarkSurface, DarkCard)
+                            colors = listOf(DarkSurface, DarkSurfaceVariant)
                         )
                     )
                     .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(28.dp))
@@ -130,7 +135,7 @@ fun DashboardScreen(
                                 fontWeight = FontWeight.Black
                             )
                             Text(
-                                text = "/ " + targetLimit.toString() + " reels goal",
+                                text = "/ $targetLimit reels goal",
                                 color = TextSecondary,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
@@ -144,24 +149,121 @@ fun DashboardScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        val minutesStr = (stats?.totalWatchTimeMinutes ?: 0).toString() + " min"
-                        val zenStr = (stats?.zenScore ?: 100).toString() + "%"
-                        QuickStatItem(
-                            label = "Estimated Time",
-                            value = minutesStr
-                        )
+                        val minutesStr = "${stats?.totalWatchTimeMinutes ?: 0} min"
+                        val zenStr = "${stats?.zenScore ?: 100}%"
+                        QuickStatItem(label = "Estimated Time", value = minutesStr)
                         Box(
                             modifier = Modifier
                                 .width(1.dp)
                                 .height(36.dp)
                                 .background(Color.White.copy(alpha = 0.1f))
                         )
-                        QuickStatItem(
-                            label = "Mindful Score",
-                            value = zenStr
-                        )
+                        QuickStatItem(label = "Mindful Score", value = zenStr)
                     }
                 }
+            }
+        }
+
+        item {
+            Text(
+                text = "⚡ DYNAMIC ISLAND CONTROLS & TEST",
+                color = TextSecondary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp
+            )
+        }
+
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(DarkSurface)
+                    .border(1.dp, NeonCyan.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Text(
+                    text = "Live Punch-Hole Overlay",
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+                Text(
+                    text = "Preview how the Dynamic Island wraps around your front camera punch-hole with live reel count and animations.",
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Button(
+                        onClick = onTestDynamicIsland,
+                        colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = DarkBackground),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(text = "Preview Island", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+
+                    OutlinedButton(
+                        onClick = onDismissDynamicIsland,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(text = "Dismiss", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
+
+                Button(
+                    onClick = onSimulateReelSwipe,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E2433), contentColor = NeonCyan),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "📱 Simulate +1 Reel Swipe", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = "SYSTEM PERMISSIONS STATUS",
+                color = TextSecondary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.5.sp
+            )
+        }
+
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(DarkSurface)
+                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                PermissionActionRow(
+                    title = "1. Accessibility Service",
+                    subtitle = if (isAccessibilityEnabled) "Active & Tracking reels in background" else "Required to detect reels in Instagram, TikTok, Shorts & Facebook",
+                    isGranted = isAccessibilityEnabled,
+                    buttonText = if (isAccessibilityEnabled) "Active" else "Enable",
+                    onClick = onOpenAccessibilitySettings
+                )
+                HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
+                PermissionActionRow(
+                    title = "2. Dynamic Island Overlay",
+                    subtitle = if (isOverlayGranted) "Active & Allowed to draw around punch-hole" else "Required to draw the live pill over other apps",
+                    isGranted = isOverlayGranted,
+                    buttonText = if (isOverlayGranted) "Granted" else "Grant",
+                    onClick = onOpenOverlaySettings
+                )
             }
         }
 
@@ -187,42 +289,6 @@ fun DashboardScreen(
                     val platformCount = breakdown[platform] ?: 0
                     PlatformRowCard(platform = platform, count = platformCount, total = totalCount)
                 }
-            }
-        }
-
-        item {
-            Text(
-                text = "DYNAMIC ISLAND SETUP",
-                color = TextSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.5.sp
-            )
-        }
-
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(DarkSurface)
-                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
-                    .padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                PermissionActionRow(
-                    title = "1. Accessibility Service",
-                    subtitle = "Detects scrolls in Instagram, TikTok, Shorts & Facebook",
-                    buttonText = "Enable",
-                    onClick = onOpenAccessibilitySettings
-                )
-                HorizontalDivider(color = Color.White.copy(alpha = 0.08f))
-                PermissionActionRow(
-                    title = "2. Dynamic Island Overlay",
-                    subtitle = "Draws the pill around your camera punch-hole",
-                    buttonText = "Grant",
-                    onClick = onOpenOverlaySettings
-                )
             }
         }
     }
@@ -263,7 +329,7 @@ fun PlatformRowCard(platform: Platform, count: Int, total: Int) {
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(text = platform.displayName, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(text = percentage.toString() + "% of total", color = TextSecondary, fontSize = 11.sp)
+                Text(text = "$percentage% of total", color = TextSecondary, fontSize = 11.sp)
             }
         }
 
@@ -280,6 +346,7 @@ fun PlatformRowCard(platform: Platform, count: Int, total: Int) {
 fun PermissionActionRow(
     title: String,
     subtitle: String,
+    isGranted: Boolean,
     buttonText: String,
     onClick: () -> Unit
 ) {
@@ -289,13 +356,24 @@ fun PermissionActionRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (isGranted) "OK " else "! ",
+                    fontSize = 12.sp,
+                    color = if (isGranted) Color(0xFF00E676) else Color(0xFFFFB300),
+                    fontWeight = FontWeight.Bold
+                )
+                Text(text = title, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            }
             Text(text = subtitle, color = TextSecondary, fontSize = 11.sp)
         }
         Spacer(modifier = Modifier.width(8.dp))
         Button(
             onClick = onClick,
-            colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = DarkBackground),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isGranted) Color(0xFF1E2822) else NeonCyan,
+                contentColor = if (isGranted) Color(0xFF00E676) else DarkBackground
+            ),
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(text = buttonText, fontWeight = FontWeight.Bold, fontSize = 12.sp)

@@ -1,8 +1,11 @@
 package com.reelcounter.app.overlay
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -10,7 +13,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,23 +51,24 @@ fun DynamicIslandOverlay(
     )
 
     val islandWidth by animateDpAsState(
-        targetValue = if (isExpanded) 340.dp else 190.dp,
+        targetValue = if (isExpanded) 340.dp else 200.dp,
         animationSpec = spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow),
         label = "island_width"
     )
 
     val islandHeight by animateDpAsState(
-        targetValue = if (isExpanded) 160.dp else 42.dp,
+        targetValue = if (isExpanded) 160.dp else 44.dp,
         animationSpec = spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow),
         label = "island_height"
     )
 
     Box(
         modifier = Modifier
-            .padding(top = 8.dp)
-            .shadow(elevation = 18.dp, shape = RoundedCornerShape(26.dp), spotColor = meterColor)
+            .padding(top = 4.dp)
+            .shadow(elevation = 20.dp, shape = RoundedCornerShape(26.dp), spotColor = meterColor)
             .clip(RoundedCornerShape(26.dp))
-            .background(Color(0xFF000000))
+            .background(Color(0xFF0A0C12))
+            .border(1.dp, meterColor.copy(alpha = 0.5f), RoundedCornerShape(26.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -81,12 +87,12 @@ fun DynamicIslandOverlay(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = platform.iconEmoji,
-                        fontSize = 16.sp
+                        fontSize = 17.sp
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Box(
                         modifier = Modifier
-                            .size(7.dp)
+                            .size(8.dp)
                             .clip(CircleShape)
                             .background(meterColor)
                     )
@@ -112,7 +118,7 @@ fun DynamicIslandOverlay(
                     }
                     Text(
                         text = " reels",
-                        color = Color.White.copy(alpha = 0.6f),
+                        color = Color.White.copy(alpha = 0.65f),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -148,12 +154,15 @@ fun DynamicIslandOverlay(
                     }
 
                     IconButton(
-                        onClick = { isExpanded = false },
+                        onClick = {
+                            isExpanded = false
+                            onDismiss()
+                        },
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Collapse",
+                            contentDescription = "Close",
                             tint = Color.White.copy(alpha = 0.7f),
                             modifier = Modifier.size(18.dp)
                         )
@@ -167,14 +176,14 @@ fun DynamicIslandOverlay(
                 ) {
                     Column {
                         Text(
-                            text = count.toString() + " Reels Today",
+                            text = "$count Reels Today",
                             color = Color.White,
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Black
                         )
                         val estimatedMinutes = (count * 25) / 60
                         Text(
-                            text = "≈ " + estimatedMinutes.toString() + " mins elapsed",
+                            text = "approx. $estimatedMinutes mins elapsed",
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 12.sp
                         )
