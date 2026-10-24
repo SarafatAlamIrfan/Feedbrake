@@ -43,7 +43,7 @@ class ReelGlanceWidget : GlanceAppWidget() {
             Text(
                 text = "FEEDBRAKE - REELS",
                 style = TextStyle(
-                    color = ColorProvider(Color.White.copy(alpha = 0.5f)),
+                    color = ColorProvider(day = Color.White.copy(alpha = 0.5f), night = Color.White.copy(alpha = 0.5f)),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -54,7 +54,7 @@ class ReelGlanceWidget : GlanceAppWidget() {
             Text(
                 text = count.toString(),
                 style = TextStyle(
-                    color = ColorProvider(accentColor),
+                    color = ColorProvider(day = accentColor, night = accentColor),
                     fontSize = 44.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -71,7 +71,7 @@ class ReelGlanceWidget : GlanceAppWidget() {
             Text(
                 text = statusText,
                 style = TextStyle(
-                    color = ColorProvider(Color.White.copy(alpha = 0.85f)),
+                    color = ColorProvider(day = Color.White.copy(alpha = 0.85f), night = Color.White.copy(alpha = 0.85f)),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Normal
                 )

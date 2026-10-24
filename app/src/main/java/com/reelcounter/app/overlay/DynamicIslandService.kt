@@ -13,19 +13,25 @@ import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
-import androidx.savedstate.ViewTreeSavedStateRegistryOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.reelcounter.app.data.model.Platform
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner, ViewModelStoreOwner {
 
-    private val lifecycleRegistry = LifecycleRegistry(this)
-    private val savedStateRegistryController = SavedStateRegistryController.create(this)
-    private val store = ViewModelStore()
+    private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry(this)
+    private val savedStateRegistryController: SavedStateRegistryController = SavedStateRegistryController.create(this)
+    private val store: ViewModelStore = ViewModelStore()
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
     override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
@@ -35,125 +41,15 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
     private var composeView: ComposeView? = null
     private var isIslandVisible = false
 
-    override fun onCreate() {
-        super.onCreate()
-        savedStateRegistryController.performRestore(null)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
-
-        windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        startForegroundNotification()
-    }
-
-    private fun startForegroundNotification() {
-        val channelId = "feedbrake_island_channel"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Dynamic Island Active Tracker",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager?.createNotificationChannel(channel)
-        }
-
-        val notification: Notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Feedbrake Live")
-            .setContentText("Dynamic Island tracking active reels")
-            .setSmallIcon(android.R.drawable.ic_media_play)
-            .setOngoing(true)
-            .build()
-
-        startForeground(1001, notification)
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val action = intent?.action
-        when (action) {
-            ACTION_SHOW -> {
-                val platformName = intent.getStringExtra(EXTRA_PLATFORM) ?: Platform.INSTAGRAM.name
-                val platform = runCatching { Platform.valueOf(platformName) }.getOrDefault(Platform.INSTAGRAM)
-                currentPlatformState.value = platform
-                showIslandOverlay()
-            }
-            ACTION_HIDE -> {
-                hideIslandOverlay()
-            }
-            ACTION_UPDATE_COUNT -> {
-                val count = intent.getIntExtra(EXTRA_COUNT, 0)
-                liveCountState.value = count
-            }
-        }
-        return START_STICKY
-    }
-
-    private fun showIslandOverlay() {
-        if (isIslandVisible) return
-        val anchor = CutoutDetector.detectCutout(this)
-
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            else
-                @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-            y = if (anchor.hasCutout) anchor.topY else 24
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
-            }
-        }
-
-        composeView = ComposeView(this).apply {
-            ViewTreeLifecycleOwner.set(this, this@DynamicIslandService)
-            ViewTreeSavedStateRegistryOwner.set(this, this@DynamicIslandService)
-            ViewTreeViewModelStoreOwner.set(this, this@DynamicIslandService)
-            setContent {
-                DynamicIslandOverlay(
-                    platformState = currentPlatformState,
-                    countState = liveCountState,
-                    onDismiss = { hideIslandOverlay() }
-                )
-            }
-        }
-
-        windowManager?.addView(composeView, params)
-        isIslandVisible = true
-    }
-
-    private fun hideIslandOverlay() {
-        if (!isIslandVisible) return
-        composeView?.let {
-            windowManager?.removeView(it)
-        }
-        composeView = null
-        isIslandVisible = false
-    }
-
-    override fun onDestroy() {
-        hideIslandOverlay()
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-        store.clear()
-        super.onDestroy()
-    }
-
-    override fun onBind(intent: Intent?): IBinder? = null
-
     companion object {
         private const val ACTION_SHOW = "com.reelcounter.app.SHOW_ISLAND"
         private const val ACTION_HIDE = "com.reelcounter.app.HIDE_ISLAND"
         private const val ACTION_UPDATE_COUNT = "com.reelcounter.app.UPDATE_COUNT"
         private const val EXTRA_PLATFORM = "extra_platform"
         private const val EXTRA_COUNT = "extra_count"
+
+        private const val CHANNEL_ID = "feedbrake_dynamic_island"
+        private const val NOTIFICATION_ID = 2001
 
         val currentPlatformState = MutableStateFlow(Platform.INSTAGRAM)
         val liveCountState = MutableStateFlow(0)
@@ -186,4 +82,129 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
             context.startService(intent)
         }
     }
+
+    override fun onCreate() {
+        super.onCreate()
+        savedStateRegistryController.performRestore(null)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+
+        windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        startForeground(NOTIFICATION_ID, createNotification())
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            ACTION_SHOW -> {
+                val platformName = intent.getStringExtra(EXTRA_PLATFORM) ?: Platform.INSTAGRAM.name
+                currentPlatformState.value = runCatching { Platform.valueOf(platformName) }.getOrDefault(Platform.OTHER)
+                showIslandOverlay()
+            }
+            ACTION_UPDATE_COUNT -> {
+                val count = intent.getIntExtra(EXTRA_COUNT, liveCountState.value + 1)
+                liveCountState.value = count
+            }
+            ACTION_HIDE -> {
+                hideIslandOverlay()
+                stopSelf()
+            }
+        }
+        return START_STICKY
+    }
+
+    private fun showIslandOverlay() {
+        if (isIslandVisible) return
+        val anchor = CutoutDetector.detectCutout(this)
+
+        val layoutFlag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+        } else {
+            @Suppress("DEPRECATION")
+            WindowManager.LayoutParams.TYPE_PHONE
+        }
+
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            layoutFlag,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+            y = if (anchor.hasCutout) anchor.topY else 24
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            }
+        }
+
+        composeView = ComposeView(this).apply {
+            setViewTreeLifecycleOwner(this@DynamicIslandService)
+            setViewTreeSavedStateRegistryOwner(this@DynamicIslandService)
+            setViewTreeViewModelStoreOwner(this@DynamicIslandService)
+            setContent {
+                DynamicIslandOverlay(
+                    platformState = currentPlatformState,
+                    countState = liveCountState,
+                    onDismiss = { hideIslandOverlay() }
+                )
+            }
+        }
+
+        try {
+            windowManager?.addView(composeView, params)
+            isIslandVisible = true
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun hideIslandOverlay() {
+        if (!isIslandVisible) return
+        try {
+            composeView?.let { windowManager?.removeView(it) }
+            composeView = null
+            isIslandVisible = false
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun createNotification(): Notification {
+        val channelName = "Feedbrake Dynamic Island"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                channelName,
+                NotificationManager.IMPORTANCE_MIN
+            ).apply {
+                description = "Shows live dynamic island for active reel counter"
+                setShowBadge(false)
+            }
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(channel)
+        }
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Feedbrake Active")
+            .setContentText("Dynamic Island tracking reel scrolls")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setOngoing(true)
+            .build()
+    }
+
+    override fun onDestroy() {
+        hideIslandOverlay()
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        store.clear()
+        super.onDestroy()
+    }
+
+    override fun onBind(intent: Intent?): IBinder? = null
 }
