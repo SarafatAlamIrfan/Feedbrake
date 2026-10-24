@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -29,19 +31,31 @@ jobs:
 
       - name: Build Debug APK
         run: |
+          set -o pipefail
           ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee gradle-build.log
 
-      - name: Print Build Error Log if Failed
+      - name: Save Build Log on Failure
         if: failure()
         run: |
-          echo "==================== BUILD ERROR LOG ===================="
-          tail -n 350 gradle-build.log
-          echo "=========================================================="
+          echo "=== BUILD FAILED. Pushing log to build-logs branch ==="
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B build-logs
+          git add gradle-build.log
+          git commit -m "Log for failed build [skip ci]" || true
+          git push origin build-logs --force || true
 
-      - name: Rename APK for Release
+      - name: Locate and Prepare APK
         run: |
           mkdir -p release-apk
-          cp app/build/outputs/apk/debug/app-debug.apk release-apk/Feedbrake-v1.0.0-debug.apk
+          APK_PATH=$(find app/build/outputs/apk/debug/ -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "ERROR: No APK found!"
+            exit 1
+          fi
+          echo "Found APK: $APK_PATH"
+          cp "$APK_PATH" release-apk/Feedbrake-v1.0.0-debug.apk
+          ls -la release-apk/
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -49,23 +63,33 @@ jobs:
           name: Feedbrake-debug-apk
           path: release-apk/Feedbrake-v1.0.0-debug.apk
 
+      - name: Push APK to Download Branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B apk-download
+          cp release-apk/Feedbrake-v1.0.0-debug.apk ./Feedbrake-v1.0.0-debug.apk
+          git add Feedbrake-v1.0.0-debug.apk
+          git commit -m "Release Feedbrake v1.0.0 APK [skip ci]" || true
+          git push origin apk-download --force || true
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0
-          name: Feedbrake v1.0.0 (Release APK)
+          name: "Feedbrake v1.0.0"
           body: |
-            ## 🛑 Feedbrake v1.0.0 - Android APK Release
-            
-            ### ✨ What's Inside:
-            - **🏝️ Dynamic Island Live Overlay**: Anchors around your camera punch-hole with live reel count and micro spring animations.
-            - **📱 Multi-Platform Reel Detection**: Tracks Instagram Reels, TikTok, YouTube Shorts, and Facebook Reels.
-            - **🏠 Jetpack Glance Home Screen Widget**: Material 3 widget for your home screen.
-            - **⚡ OLED Dark Mode Dashboard**: Animated progress dial, dopamine danger levels, and platform breakdown.
-            
+            ## Feedbrake v1.0.0 - Android APK Release
+
+            ### Features:
+            - **Dynamic Island Live Overlay**: Anchors around your camera punch-hole with live reel count and micro spring animations.
+            - **Multi-Platform Reel Detection**: Tracks Instagram Reels, TikTok, YouTube Shorts, and Facebook Reels.
+            - **Jetpack Glance Home Screen Widget**: Material 3 widget for your home screen.
+            - **OLED Dark Mode Dashboard**: Animated progress dial, dopamine danger levels, and platform breakdown.
+
             ---
-            ### 📥 Download & Install:
-            Download the `Feedbrake-v1.0.0-debug.apk` asset below and install it directly on your Android phone (Android 9.0+).
+            ### Download & Install:
+            Download the **Feedbrake-v1.0.0-debug.apk** below and install it directly on your Android phone (Android 9.0+).
           draft: false
           prerelease: false
           files: release-apk/Feedbrake-v1.0.0-debug.apk
