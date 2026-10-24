@@ -37,7 +37,12 @@ fun DashboardScreen(
 ) {
     val totalCount = stats?.totalCount ?: 0
     val targetLimit = 50
-    val currentDangerLevel = DangerLevel.fromCount(totalCount)
+    val currentDangerLevel = when {
+        totalCount < 20 -> DangerLevel.MINDFUL
+        totalCount < 50 -> DangerLevel.MODERATE
+        totalCount < 80 -> DangerLevel.WARNING
+        else -> DangerLevel.DOOMSCROLL
+    }
 
     val progressFraction = (totalCount.toFloat() / targetLimit.toFloat()).coerceIn(0f, 1f)
     val animatedProgress by animateFloatAsState(
@@ -85,7 +90,7 @@ fun DashboardScreen(
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = currentDangerLevel.displayName,
+                        text = currentDangerLevel.label,
                         color = Color(currentDangerLevel.hexColor),
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp
@@ -101,7 +106,7 @@ fun DashboardScreen(
                     .clip(RoundedCornerShape(28.dp))
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(DarkSurface, DarkSurfaceVariant)
+                            colors = listOf(DarkSurface, DarkCard)
                         )
                     )
                     .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(28.dp))
@@ -114,14 +119,14 @@ fun DashboardScreen(
                         modifier = Modifier.size(190.dp)
                     ) {
                         CircularProgressIndicator(
-                            progress = { 1f },
+                            progress = 1f,
                             modifier = Modifier.fillMaxSize(),
                             color = Color.White.copy(alpha = 0.06f),
                             strokeWidth = 12.dp,
                             trackColor = Color.Transparent
                         )
                         CircularProgressIndicator(
-                            progress = { animatedProgress },
+                            progress = animatedProgress,
                             modifier = Modifier.fillMaxSize(),
                             color = Color(currentDangerLevel.hexColor),
                             strokeWidth = 12.dp,
