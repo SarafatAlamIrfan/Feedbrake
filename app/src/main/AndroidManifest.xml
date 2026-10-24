@@ -59,5 +59,27 @@
                 android:resource="@xml/reel_counter_widget_info" />
         </receiver>
 
+        <receiver
+            android:name=".widget.ReelCompactWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/reel_compact_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.ReelDetailedWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/reel_detailed_widget_info" />
+        </receiver>
+
     </application>
 </manifest>

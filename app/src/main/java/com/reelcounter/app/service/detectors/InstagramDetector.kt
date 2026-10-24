@@ -13,16 +13,25 @@ class InstagramDetector : PlatformDetector {
 
     override fun isReelViewerActive(event: AccessibilityEvent, rootNode: AccessibilityNodeInfo?): Boolean {
         val className = event.className?.toString() ?: ""
-        if (className.contains("Clips") || className.contains("Reel") || className.contains("ModalActivity")) {
+        // Instagram reels viewer class or activity
+        if (className.contains("ClipsViewer") || className.contains("ReelViewerFragment")) {
             return true
         }
+
         if (rootNode == null) return false
+
+        // Look specifically for reel/clip video layout container IDs
         val clipsNodes = rootNode.findAccessibilityNodeInfosByViewId("com.instagram.android:id/clips_video_container")
-        val reelNodes = rootNode.findAccessibilityNodeInfosByViewId("com.instagram.android:id/reel_viewer_root")
-        val isClipsPresent = clipsNodes.isNotEmpty() || reelNodes.isNotEmpty()
+        val reelRootNodes = rootNode.findAccessibilityNodeInfosByViewId("com.instagram.android:id/reel_viewer_root")
+        val clipsSwipeNodes = rootNode.findAccessibilityNodeInfosByViewId("com.instagram.android:id/clips_swipe_refresh_container")
+
+        val isReel = clipsNodes.isNotEmpty() || reelRootNodes.isNotEmpty() || clipsSwipeNodes.isNotEmpty()
+
         clipsNodes.forEach { it.recycle() }
-        reelNodes.forEach { it.recycle() }
-        return isClipsPresent
+        reelRootNodes.forEach { it.recycle() }
+        clipsSwipeNodes.forEach { it.recycle() }
+
+        return isReel
     }
 
     override fun isScrollGesture(event: AccessibilityEvent): Boolean {

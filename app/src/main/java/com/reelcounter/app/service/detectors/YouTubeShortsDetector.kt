@@ -16,12 +16,20 @@ class YouTubeShortsDetector : PlatformDetector {
         if (className.contains("ShortsPlayer") || className.contains("ReelWatchFragment")) {
             return true
         }
+
         if (rootNode == null) return false
+
+        // Look specifically for shorts reel containers, NOT standard video watch views
         val shortsNodes = rootNode.findAccessibilityNodeInfosByViewId("com.google.android.youtube:id/reel_recycler")
         val playerNodes = rootNode.findAccessibilityNodeInfosByViewId("com.google.android.youtube:id/shorts_container")
-        val isShorts = shortsNodes.isNotEmpty() || playerNodes.isNotEmpty()
+        val reelItemNodes = rootNode.findAccessibilityNodeInfosByViewId("com.google.android.youtube:id/reel_player_page_item")
+
+        val isShorts = shortsNodes.isNotEmpty() || playerNodes.isNotEmpty() || reelItemNodes.isNotEmpty()
+
         shortsNodes.forEach { it.recycle() }
         playerNodes.forEach { it.recycle() }
+        reelItemNodes.forEach { it.recycle() }
+
         return isShorts
     }
 

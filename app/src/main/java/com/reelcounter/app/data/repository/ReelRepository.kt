@@ -9,6 +9,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.time.LocalDate
 
+enum class DisplayMode(val label: String, val description: String) {
+    AUTO("Smart Auto", "Uses punch-hole Island if available, otherwise Notification Bar"),
+    DYNAMIC_ISLAND("Dynamic Island", "Pill anchored to camera punch-hole cutout"),
+    NOTIFICATION_BAR("Notification Panel", "Live counter & progress bar in notification shade")
+}
+
 class ReelRepository(context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences("feedbrake_stats", Context.MODE_PRIVATE)
@@ -22,8 +28,16 @@ class ReelRepository(context: Context) {
     private val _todayStats = MutableStateFlow<DailyStats?>(null)
     val todayStats: StateFlow<DailyStats?> = _todayStats.asStateFlow()
 
+    private val _enabledPlatforms = MutableStateFlow<Set<Platform>>(emptySet())
+    val enabledPlatforms: StateFlow<Set<Platform>> = _enabledPlatforms.asStateFlow()
+
+    private val _displayMode = MutableStateFlow(DisplayMode.AUTO)
+    val displayMode: StateFlow<DisplayMode> = _displayMode.asStateFlow()
+
     init {
         loadTodayData()
+        loadEnabledPlatforms()
+        loadDisplayMode()
     }
 
     private fun getTodayKey(): String = LocalDate.now().toString()
@@ -42,6 +56,45 @@ class ReelRepository(context: Context) {
         }
         _todayPlatformBreakdown.value = breakdown
         updateStats(count, breakdown)
+    }
+
+    private fun loadEnabledPlatforms() {
+        val enabled = mutableSetOf<Platform>()
+        for (p in Platform.entries) {
+            if (p == Platform.OTHER) continue
+            val defaultEnabled = when (p) {
+                Platform.INSTAGRAM, Platform.TIKTOK, Platform.YOUTUBE_SHORTS, Platform.FACEBOOK -> true
+                else -> false
+            }
+            if (prefs.getBoolean("track_platform_" + p.name, defaultEnabled)) {
+                enabled.add(p)
+            }
+        }
+        _enabledPlatforms.value = enabled
+    }
+
+    fun isPlatformEnabled(platform: Platform): Boolean {
+        if (platform == Platform.OTHER) return false
+        val defaultEnabled = when (platform) {
+            Platform.INSTAGRAM, Platform.TIKTOK, Platform.YOUTUBE_SHORTS, Platform.FACEBOOK -> true
+            else -> false
+        }
+        return prefs.getBoolean("track_platform_" + platform.name, defaultEnabled)
+    }
+
+    fun setPlatformEnabled(platform: Platform, enabled: Boolean) {
+        prefs.edit().putBoolean("track_platform_" + platform.name, enabled).apply()
+        loadEnabledPlatforms()
+    }
+
+    private fun loadDisplayMode() {
+        val modeStr = prefs.getString("display_mode", DisplayMode.AUTO.name) ?: DisplayMode.AUTO.name
+        _displayMode.value = runCatching { DisplayMode.valueOf(modeStr) }.getOrDefault(DisplayMode.AUTO)
+    }
+
+    fun setDisplayMode(mode: DisplayMode) {
+        prefs.edit().putString("display_mode", mode.name).apply()
+        _displayMode.value = mode
     }
 
     suspend fun recordReel(platform: Platform, durationSeconds: Int = 0) {

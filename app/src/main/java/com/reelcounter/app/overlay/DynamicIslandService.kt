@@ -9,7 +9,9 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
@@ -28,6 +30,8 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.reelcounter.app.data.model.Platform
+import com.reelcounter.app.data.repository.DisplayMode
+import com.reelcounter.app.data.repository.ReelRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner, ViewModelStoreOwner {
@@ -44,6 +48,11 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
     private var composeView: ComposeView? = null
     private var isIslandVisible = false
 
+    private val hideHandler = Handler(Looper.getMainLooper())
+    private val autoDismissRunnable = Runnable {
+        hideIslandOverlay()
+    }
+
     companion object {
         private const val TAG = "DynamicIslandService"
         private const val ACTION_SHOW = "com.reelcounter.app.SHOW_ISLAND"
@@ -52,7 +61,7 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
         private const val EXTRA_PLATFORM = "extra_platform"
         private const val EXTRA_COUNT = "extra_count"
 
-        private const val CHANNEL_ID = "feedbrake_dynamic_island"
+        private const val CHANNEL_ID = "feedbrake_live_tracker"
         private const val NOTIFICATION_ID = 2001
 
         val currentPlatformState = MutableStateFlow(Platform.INSTAGRAM)
@@ -81,7 +90,7 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
             try {
                 context.startService(intent)
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to stop DynamicIslandService: ${e.message}")
+                Log.e(TAG, "Failed to hide DynamicIsland: ${e.message}")
             }
         }
 
@@ -109,7 +118,7 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
         try {
-            val notification = createNotification()
+            val notification = createNotification(currentPlatformState.value, liveCountState.value)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
             } else {
@@ -124,15 +133,14 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
         when (intent?.action) {
             ACTION_SHOW -> {
                 val platformName = intent.getStringExtra(EXTRA_PLATFORM) ?: Platform.INSTAGRAM.name
-                currentPlatformState.value = runCatching { Platform.valueOf(platformName) }.getOrDefault(Platform.OTHER)
-                showIslandOverlay()
+                val p = runCatching { Platform.valueOf(platformName) }.getOrDefault(Platform.INSTAGRAM)
+                currentPlatformState.value = p
+                handleDisplayTrigger(p, liveCountState.value)
             }
             ACTION_UPDATE_COUNT -> {
                 val count = intent.getIntExtra(EXTRA_COUNT, liveCountState.value + 1)
                 liveCountState.value = count
-                if (!isIslandVisible) {
-                    showIslandOverlay()
-                }
+                handleDisplayTrigger(currentPlatformState.value, count)
             }
             ACTION_HIDE -> {
                 hideIslandOverlay()
@@ -142,11 +150,40 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
         return START_STICKY
     }
 
+    private fun handleDisplayTrigger(platform: Platform, count: Int) {
+        val repo = ReelRepository.getInstance(this)
+        val mode = repo.displayMode.value
+        val hasCutout = CutoutDetector.hasCameraCutout(this)
+
+        // Always keep the notification updated with the live reel progress
+        updateNotification(platform, count)
+
+        // Decide whether to show the overlay pill
+        val shouldShowPill = when (mode) {
+            DisplayMode.DYNAMIC_ISLAND -> true
+            DisplayMode.NOTIFICATION_BAR -> false
+            DisplayMode.AUTO -> hasCutout // Only if phone has cutout (e.g. punch-hole / iQOO / Vivo Origin Island)
+        }
+
+        if (shouldShowPill) {
+            showIslandOverlay()
+            resetAutoHideTimer()
+        } else {
+            hideIslandOverlay()
+        }
+    }
+
+    private fun resetAutoHideTimer() {
+        hideHandler.removeCallbacks(autoDismissRunnable)
+        // Auto-dismiss island after 5 seconds of inactivity so it NEVER stays stuck
+        hideHandler.postDelayed(autoDismissRunnable, 5000L)
+    }
+
     private fun showIslandOverlay() {
         if (isIslandVisible) return
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
-            Log.w(TAG, "Cannot show overlay: SYSTEM_ALERT_WINDOW permission not granted")
+            Log.w(TAG, "Overlay permission not granted")
             return
         }
 
@@ -197,45 +234,58 @@ class DynamicIslandService : Service(), LifecycleOwner, SavedStateRegistryOwner,
         try {
             windowManager?.addView(composeView, params)
             isIslandVisible = true
-            Log.i(TAG, "Dynamic Island overlay added successfully at y=${params.y}")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to add overlay view: ${e.message}")
+            Log.e(TAG, "Failed to add island view: ${e.message}")
         }
     }
 
     private fun hideIslandOverlay() {
+        hideHandler.removeCallbacks(autoDismissRunnable)
         if (!isIslandVisible) return
         try {
             composeView?.let { windowManager?.removeView(it) }
             composeView = null
             isIslandVisible = false
-            Log.i(TAG, "Dynamic Island overlay removed successfully")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to remove overlay view: ${e.message}")
+            Log.e(TAG, "Failed to remove island view: ${e.message}")
         }
     }
 
-    private fun createNotification(): Notification {
-        val channelName = "Feedbrake Dynamic Island"
+    private fun updateNotification(platform: Platform, count: Int) {
+        val manager = getSystemService(NotificationManager::class.java)
+        manager?.notify(NOTIFICATION_ID, createNotification(platform, count))
+    }
+
+    private fun createNotification(platform: Platform, count: Int): Notification {
+        val channelName = "Feedbrake Live Reel Counter"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 channelName,
-                NotificationManager.IMPORTANCE_MIN
+                NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Shows live dynamic island for active reel counter"
+                description = "Shows live reel intake count and progress bar"
                 setShowBadge(false)
             }
             val manager = getSystemService(NotificationManager::class.java)
             manager?.createNotificationChannel(channel)
         }
 
+        val targetLimit = 50
+        val estimatedMins = (count * 25) / 60
+        val statusText = when {
+            count < 20 -> "Mindful Focus"
+            count < 50 -> "Moderate Intake"
+            else -> "Doomscroll Alert!"
+        }
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Feedbrake Active")
-            .setContentText("Dynamic Island tracking reel scrolls")
+            .setContentTitle("${platform.iconEmoji} ${platform.displayName} • $count Reels Watched")
+            .setContentText("$statusText • ~$estimatedMins mins spent")
+            .setProgress(targetLimit, count.coerceAtMost(targetLimit), false)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setPriority(NotificationCompat.PRIORITY_MIN)
             .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
 

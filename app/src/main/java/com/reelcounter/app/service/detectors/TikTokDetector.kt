@@ -12,6 +12,11 @@ class TikTokDetector : PlatformDetector {
     }
 
     override fun isReelViewerActive(event: AccessibilityEvent, rootNode: AccessibilityNodeInfo?): Boolean {
+        val className = event.className?.toString() ?: ""
+        // Do not count if browsing profile, settings, or inbox
+        if (className.contains("UserProfile") || className.contains("Inbox") || className.contains("Setting")) {
+            return false
+        }
         return true
     }
 

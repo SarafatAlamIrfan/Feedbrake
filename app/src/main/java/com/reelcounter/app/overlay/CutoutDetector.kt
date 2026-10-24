@@ -29,6 +29,10 @@ object CutoutDetector {
         return result
     }
 
+    fun hasCameraCutout(context: Context): Boolean {
+        return detectCutout(context).hasCutout
+    }
+
     fun detectCutout(context: Context): IslandAnchor {
         val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val displayMetrics = context.resources.displayMetrics

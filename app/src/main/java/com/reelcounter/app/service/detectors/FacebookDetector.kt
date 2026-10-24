@@ -16,10 +16,17 @@ class FacebookDetector : PlatformDetector {
         if (className.contains("FbReels") || className.contains("ShortFormVideo")) {
             return true
         }
+
         if (rootNode == null) return false
+
         val fbReelNodes = rootNode.findAccessibilityNodeInfosByViewId("com.facebook.katana:id/fb_shorts_container")
-        val isReel = fbReelNodes.isNotEmpty()
+        val reelVideoNodes = rootNode.findAccessibilityNodeInfosByViewId("com.facebook.katana:id/reel_viewer_container")
+
+        val isReel = fbReelNodes.isNotEmpty() || reelVideoNodes.isNotEmpty()
+
         fbReelNodes.forEach { it.recycle() }
+        reelVideoNodes.forEach { it.recycle() }
+
         return isReel
     }
 

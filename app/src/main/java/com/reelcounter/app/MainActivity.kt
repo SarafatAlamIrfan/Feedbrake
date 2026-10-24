@@ -18,7 +18,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.reelcounter.app.data.model.Platform
+import com.reelcounter.app.data.repository.DisplayMode
 import com.reelcounter.app.data.repository.ReelRepository
+import com.reelcounter.app.overlay.CutoutDetector
 import com.reelcounter.app.overlay.DynamicIslandService
 import com.reelcounter.app.service.ReelAccessibilityService
 import com.reelcounter.app.ui.screens.DashboardScreen
@@ -38,8 +40,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             ReelCounterTheme {
                 val stats by repository.todayStats.collectAsState(initial = null)
+                val enabledPlatforms by repository.enabledPlatforms.collectAsState()
+                val displayMode by repository.displayMode.collectAsState()
                 val isAccessibility by isAccessibilityEnabledState
                 val isOverlay by isOverlayGrantedState
+
+                val hasCutout = remember { CutoutDetector.hasCameraCutout(this@MainActivity) }
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -49,6 +55,15 @@ class MainActivity : ComponentActivity() {
                         stats = stats,
                         isAccessibilityEnabled = isAccessibility,
                         isOverlayGranted = isOverlay,
+                        enabledPlatforms = enabledPlatforms,
+                        currentDisplayMode = displayMode,
+                        hasCameraCutout = hasCutout,
+                        onTogglePlatform = { platform, isEnabled ->
+                            repository.setPlatformEnabled(platform, isEnabled)
+                        },
+                        onChangeDisplayMode = { mode ->
+                            repository.setDisplayMode(mode)
+                        },
                         onOpenAccessibilitySettings = { openAccessibilitySettings() },
                         onOpenOverlaySettings = { openOverlaySettings() },
                         onTestDynamicIsland = { testDynamicIsland() },
@@ -83,7 +98,7 @@ class MainActivity : ComponentActivity() {
         val currentCount = repository.todayCount.value
         DynamicIslandService.showIsland(this, Platform.INSTAGRAM)
         DynamicIslandService.updateLiveCount(this, Platform.INSTAGRAM, currentCount + 1)
-        Toast.makeText(this, "⚡ Dynamic Island activated at top of screen!", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "⚡ Dynamic Island activated! Tap it to expand.", Toast.LENGTH_SHORT).show()
     }
 
     private fun dismissDynamicIsland() {
